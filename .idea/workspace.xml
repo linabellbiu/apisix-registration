@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a0811fc-3e18-4fac-aedd-396e5d8fb14a" name="更改" comment="Initial commit">
+    <list default="true" id="0a0811fc-3e18-4fac-aedd-396e5d8fb14a" name="更改" comment="Refactor logging and adjust default shutdown timeout&#10;&#10;This commit refactors the logging in `health.go` and `registration.go` to remove redundant log messages. It also adjusts the default shutdown timeout from 5 seconds to 3 seconds in `errors.go`.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/gozero/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/examples/gozero/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/health.go" beforeDir="false" afterPath="$PROJECT_DIR$/health.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,7 +107,9 @@
     <MESSAGE value="OpenAI Token is not set." />
     <MESSAGE value="Add health check and service registration functionality&#10;&#10;Implement a health check server and a service registration manager to register and manage services in APISIX. The health check server provides a `/health` endpoint, and the registration manager handles service registration, graceful shutdown, and signal handling. Examples and documentation are also included." />
     <MESSAGE value="Initial commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial commit" />
+    <MESSAGE value="Refactor logging and adjust default shutdown timeout&#10;&#10;This commit refactors the logging in `health.go` and `registration.go` to" />
+    <MESSAGE value="Refactor logging and adjust default shutdown timeout&#10;&#10;This commit refactors the logging in `health.go` and `registration.go` to remove redundant log messages. It also adjusts the default shutdown timeout from 5 seconds to 3 seconds in `errors.go`." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor logging and adjust default shutdown timeout&#10;&#10;This commit refactors the logging in `health.go` and `registration.go` to remove redundant log messages. It also adjusts the default shutdown timeout from 5 seconds to 3 seconds in `errors.go`." />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

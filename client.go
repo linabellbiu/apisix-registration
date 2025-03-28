@@ -170,8 +170,7 @@ func (c *apisixClient) addNodeToUpstream(adminAPI, apiKey, upstreamID, host stri
 		SetHeader("Content-Type", "application/json").
 		SetHeader("X-API-KEY", apiKey).
 		SetBody(upstreamValue).
-		Put(url)
-
+		Patch(url)
 	if err != nil {
 		return fmt.Errorf("更新上游请求失败: %w", err)
 	}

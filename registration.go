@@ -114,37 +114,29 @@ func New(cfg Config) (*Service, error) {
 		// 健康检查开启时，设置默认值
 		if cfg.HealthCfg.Timeout <= 0 {
 			cfg.HealthCfg.Timeout = DefaultHealthCheckTimeout
-			logger.Info("未指定健康检查超时时间，使用默认值", zap.Int("timeout", cfg.HealthCfg.Timeout))
 		}
 
 		if cfg.HealthCfg.MaxFails <= 0 {
 			cfg.HealthCfg.MaxFails = DefaultHealthCheckMaxFails
-			logger.Info("未指定健康检查最大失败次数，使用默认值", zap.Int("max_fails", cfg.HealthCfg.MaxFails))
 		}
 
 		if cfg.HealthCfg.Method == "" {
 			cfg.HealthCfg.Method = DefaultHealthCheckMethod
-			logger.Info("未指定健康检查HTTP方法，使用默认值", zap.String("method", cfg.HealthCfg.Method))
 		}
 
 		if cfg.HealthCfg.Route == "" {
 			cfg.HealthCfg.Route = DefaultHealthCheckRoute
-			logger.Info("未指定健康检查路由，使用默认值", zap.String("route", cfg.HealthCfg.Route))
 		}
 
 		if cfg.HealthCfg.HealthyCode <= 0 {
 			cfg.HealthCfg.HealthyCode = DefaultHealthCheckHealthyCode
-			logger.Info("未指定健康状态码，使用默认值", zap.Int("healthy_code", cfg.HealthCfg.HealthyCode))
 		}
 
 		if cfg.HealthCfg.UnhealthyCode <= 0 {
 			cfg.HealthCfg.UnhealthyCode = DefaultHealthCheckUnhealthyCode
-			logger.Info("未指定不健康状态码，使用默认值", zap.Int("unhealthy_code", cfg.HealthCfg.UnhealthyCode))
 		}
 
 		interval = DefaultHealthCheckInterval
-	} else {
-		logger.Info("健康检查已禁用")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -155,11 +147,9 @@ func New(cfg Config) (*Service, error) {
 	if cfg.HealthHandler != nil {
 		// 优先使用HealthHandler接口
 		healthSvc.setCustomHandler(cfg.HealthHandler, cfg.HealthCfg.Route)
-		logger.Info("使用自定义健康检查处理器")
 	} else if cfg.HTTPServer != nil {
 		// 兼容旧版本的HTTPServer方式
 		healthSvc.setCustomServer(cfg.HTTPServer, cfg.HealthCfg.Route)
-		logger.Info("使用标准HTTP服务器")
 	}
 
 	return &Service{
@@ -238,23 +228,17 @@ func (s *Service) StartWithGracefulShutdown(adminAPI, apiKey string) error {
 
 	// 启动健康检查服务
 	if err := s.StartHealthCheck(); err != nil {
-		// 发生错误时注销服务
-		_ = s.Deregister(adminAPI, apiKey)
+		s.logger.Error("启动健康检查失败")
 		return err
 	}
 
-	// 异步处理关闭逻辑
 	go func() {
-		// 监听信号
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-		// 等待信号
 		<-quit
 
-		s.logger.Info("关闭信号已接收，开始优雅关闭")
-
-		// 取消上下文
+		s.logger.Info("关闭信号已接收，开始注册服务关闭")
 		s.cancel()
 
 		// 从APISIX注销
@@ -273,7 +257,7 @@ func (s *Service) StartWithGracefulShutdown(adminAPI, apiKey string) error {
 		s.logger.Info("服务已完全关闭")
 	}()
 
-	s.logger.Info("服务已启动，将在接收到关闭信号后自动关闭")
+	s.logger.Info("注册服务已启动")
 	return nil
 }
 
@@ -286,10 +270,7 @@ func (s *Service) Deregister(adminAPI, apiKey string) error {
 		return ErrEmptyAdminAPI
 	}
 
-	// 构建节点标识符
 	nodeKey := fmt.Sprintf("%s:%d", s.host, s.port)
-
-	// 只删除特定节点，而不是整个上游
 	if s.upstreamID != "" {
 		err := s.apiClient.deleteNode(adminAPI, apiKey, s.upstreamID, nodeKey)
 		if err != nil {

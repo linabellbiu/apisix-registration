@@ -11,7 +11,7 @@ const (
 	DefaultHealthCheckInterval = 5
 
 	// DefaultShutdownTimeout 默认关闭超时时间(秒)
-	DefaultShutdownTimeout = 5 * time.Second
+	DefaultShutdownTimeout = 3 * time.Second
 )
 
 // 错误定义

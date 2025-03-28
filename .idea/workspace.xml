@@ -4,22 +4,8 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a0811fc-3e18-4fac-aedd-396e5d8fb14a" name="更改" comment="Add health check and service registration functionality&#10;&#10;Implement a health check server and a service registration manager to register and manage services in APISIX. The health check server provides a `/health` endpoint, and the registration manager handles service registration, graceful shutdown, and signal handling. Examples and documentation are also included.">
-      <change afterPath="$PROJECT_DIR$/.idea/apisix-registration.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/git_toolbox_prj.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/client.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/errors.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/advanced/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/async/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/basic/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/gozero/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/health.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/registration.go" afterDir="false" />
+    <list default="true" id="0a0811fc-3e18-4fac-aedd-396e5d8fb14a" name="更改" comment="Initial commit">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,7 +78,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "onboarding.tips.debug.path": "/Users/coke/Documents/HecokeWork/github/apisix-registration-discovery/main.go",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+    "settings.editor.selected.configurable": "com.github.coolbeevip.git.assistant.intellij.plugin.settings.a"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -115,6 +101,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add health check server and service registration manager&#10;&#10;Implement a health check server and a service registration manager to handle service registration, health checks, and graceful shutdown for APISIX. The health check server provides an HTTP endpoint for health status, and the registration manager manages the lifecycle of the service, including registration, deregistration, and signal handling." />
     <MESSAGE value="Add health check and service registration functionality&#10;&#10;Implement a health check server and a service registration manager to handle service registration, health checks, and graceful shutdown for APISIX. The health check server provides an HTTP endpoint for health status, and the registration manager manages the lifecycle of the service, including registration, deregistration, and signal handling. Examples and documentation are also included." />
+    <MESSAGE value="OpenAI Token is not set." />
     <MESSAGE value="Add health check and service registration functionality&#10;&#10;Implement a health check server and a service registration manager to register and manage services in APISIX. The health check server provides a `/health` endpoint, and the registration manager handles service registration, graceful shutdown, and signal handling. Examples and documentation are also included." />
     <MESSAGE value="Initial commit" />
     <option name="LAST_COMMIT_MESSAGE" value="Initial commit" />

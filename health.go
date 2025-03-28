@@ -126,8 +126,7 @@ func (h *healthService) setCustomServer(server *http.Server, healthPath string) 
 		if healthPath != "" {
 			h.healthPath = healthPath
 		}
-		h.logger.Info("已设置自定义HTTP服务器",
-			zap.String("health_path", h.healthPath))
+		h.logger.Info("已设置自定义HTTP服务器", zap.String("health_path", h.healthPath))
 	} else {
 		h.logger.Warn("提供的HTTP服务器为空")
 	}
@@ -203,7 +202,6 @@ func (h *healthService) startNewServer() error {
 func (h *healthService) shutdown(ctx context.Context) error {
 	// 如果使用的是自定义处理器，不需要关闭（由外部管理）
 	if h.customHandler != nil {
-		h.logger.Info("自定义健康检查服务由外部管理，跳过关闭")
 		return nil
 	}
 
@@ -213,10 +211,8 @@ func (h *healthService) shutdown(ctx context.Context) error {
 	}
 
 	if err := h.server.Shutdown(ctx); err != nil {
-		h.logger.Error("关闭健康检查服务失败", zap.Error(err))
 		return err
 	}
 
-	h.logger.Info("健康检查服务已关闭")
 	return nil
 }

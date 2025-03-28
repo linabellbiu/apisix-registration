@@ -14,12 +14,10 @@ import (
 
 // 健康检查相关常量
 const (
-	DefaultHealthCheckTimeout       = 3
-	DefaultHealthCheckMaxFails      = 3
-	DefaultHealthCheckMethod        = "GET"
-	DefaultHealthCheckRoute         = "/health"
-	DefaultHealthCheckHealthyCode   = 200
-	DefaultHealthCheckUnhealthyCode = 500
+	DefaultHost              = "127.0.0.1"
+	DefaultHealthCheckMethod = "GET"
+	DefaultHealthCheckRoute  = "/health"
+	DefaultAdminApi          = "http://192.168.3.71:9180/apisix/admin"
 )
 
 type Service struct {
@@ -27,8 +25,9 @@ type Service struct {
 	host        string
 	port        int
 	path        string
+	adminApi    string // APISIX Admin API 地址
+	apiKey      string // APISIX Admin API 密钥
 	upstreamID  string
-	routeID     string
 	healthCheck bool
 	interval    int
 
@@ -42,60 +41,65 @@ type Service struct {
 }
 
 type Upstream struct {
-	Id            string // Id 自定义上游ID，如果为空则自动生成
-	UpstreamTypes string // UpstreamTypes 指定上游服务的类型。
+	Id            string `json:",optional"` // Id 自定义上游ID，如果为空则自动生成
+	UpstreamTypes string `json:",optional"` // UpstreamTypes 指定上游服务的类型。
 }
 
 // HealthCheckConfig 健康检查的配置
 type HealthCheckConfig struct {
-	Enabled       bool   // 是否启用健康检查
-	Timeout       int    // 超时时间（秒）
-	MaxFails      int    // 最大失败次数
-	Method        string // HTTP 方法
-	Path          string // 健康检查路由
-	HealthyCode   int    // 健康状态码
-	UnhealthyCode int    // 不健康状态码
+	Enabled bool   `json:",optional"` // 是否启用健康检查
+	Path    string `json:",optional"` // 健康检查路由
 }
 
 // Config 是服务配置
 type Config struct {
-	Name      string // 服务名称
-	Host      string // 服务主机名
-	Port      int    // 服务端口
-	Path      string // 服务路径
-	Upstream  Upstream
-	AdminAPI  string            // APISIX Admin API 地址
-	APIKey    string            // APISIX Admin API 密钥
-	HealthCfg HealthCheckConfig // 健康检查配置
+	Name      string            // 服务名称
+	Port      int               // 服务端口
+	Host      string            `json:",optional"` // 服务主机名
+	Upstream  Upstream          `json:",optional"`
+	AdminApi  string            `json:",optional"` // APISIX Admin API 地址
+	ApiKey    string            `json:",optional"` // APISIX Admin API 密钥
+	HealthCfg HealthCheckConfig `json:",optional"` // 健康检查配置
+
 	// 可以使用以下两种方式之一来集成自定义HTTP服务：
-
 	// 1. 使用标准HTTP服务器
-	HTTPServer *http.Server
-
+	httpServer *http.Server
 	// 2. 使用自定义健康检查处理器（支持不同框架）
-	HealthHandler HealthHandler
+	healthHandler HealthHandler
+}
+
+type Option func(Config)
+
+func OptionsWithHttpServer(server *http.Server) Option {
+	return func(config Config) {
+		config.httpServer = server
+	}
+}
+
+func OptionsWithHealthHandler(health HealthHandler) Option {
+	return func(config Config) {
+		config.healthHandler = health
+	}
 }
 
 // New 创建一个新的服务实例
-func New(cfg Config) (*Service, error) {
+func New(cfg Config, o ...Option) (*Service, error) {
 	logger, _ := zap.NewProduction()
+
+	if cfg.AdminApi == "" {
+		cfg.AdminApi = DefaultAdminApi
+	}
 
 	if cfg.Name == "" {
 		return nil, fmt.Errorf("%w: 服务名称不能为空", ErrInvalidConfig)
 	}
 
 	if cfg.Host == "" {
-		return nil, ErrEmptyHost
+		cfg.Host = DefaultHost
 	}
 
 	if cfg.Port <= 0 {
 		return nil, ErrInvalidPort
-	}
-
-	// 设置默认值
-	if cfg.Path == "" {
-		cfg.Path = "/"
-		logger.Info("未指定Path，使用默认值", zap.String("path", cfg.Path))
 	}
 
 	// 生成或使用上游ID
@@ -105,62 +109,40 @@ func New(cfg Config) (*Service, error) {
 		logger.Info("未指定上游ID，自动生成", zap.String("upstream_id", upstreamID))
 	}
 
-	routeID := fmt.Sprintf("%s_route", cfg.Name)
-
 	// 处理健康检查配置
 	healthCheck := cfg.HealthCfg.Enabled
-	var interval int
-	if healthCheck {
+	if cfg.HealthCfg.Enabled {
 		// 健康检查开启时，设置默认值
-		if cfg.HealthCfg.Timeout <= 0 {
-			cfg.HealthCfg.Timeout = DefaultHealthCheckTimeout
-		}
-
-		if cfg.HealthCfg.MaxFails <= 0 {
-			cfg.HealthCfg.MaxFails = DefaultHealthCheckMaxFails
-		}
-
-		if cfg.HealthCfg.Method == "" {
-			cfg.HealthCfg.Method = DefaultHealthCheckMethod
-		}
-
 		if cfg.HealthCfg.Path == "" {
 			cfg.HealthCfg.Path = DefaultHealthCheckRoute
 		}
-
-		if cfg.HealthCfg.HealthyCode <= 0 {
-			cfg.HealthCfg.HealthyCode = DefaultHealthCheckHealthyCode
-		}
-
-		if cfg.HealthCfg.UnhealthyCode <= 0 {
-			cfg.HealthCfg.UnhealthyCode = DefaultHealthCheckUnhealthyCode
-		}
-
-		interval = DefaultHealthCheckInterval
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	apiClient := newAPIClient(logger)
 	healthSvc := newHealthService(cfg.Name, cfg.Port, logger)
 
+	for _, f := range o {
+		f(cfg)
+	}
+
 	// 设置健康检查服务
-	if cfg.HealthHandler != nil {
+	if cfg.healthHandler != nil {
 		// 优先使用HealthHandler接口
-		healthSvc.setCustomHandler(cfg.HealthHandler, cfg.HealthCfg.Path)
-	} else if cfg.HTTPServer != nil {
+		healthSvc.setCustomHandler(cfg.healthHandler, cfg.HealthCfg.Path)
+	} else if cfg.httpServer != nil {
 		// 兼容旧版本的HTTPServer方式
-		healthSvc.setCustomServer(cfg.HTTPServer, cfg.HealthCfg.Path)
+		healthSvc.setCustomServer(cfg.httpServer, cfg.HealthCfg.Path)
 	}
 
 	return &Service{
+		apiKey:      cfg.ApiKey,
+		adminApi:    cfg.AdminApi,
 		name:        cfg.Name,
 		host:        cfg.Host,
 		port:        cfg.Port,
-		path:        cfg.Path,
 		upstreamID:  upstreamID,
-		routeID:     routeID,
 		healthCheck: healthCheck,
-		interval:    interval,
 		apiClient:   apiClient,
 		healthSvc:   healthSvc,
 		logger:      logger,
@@ -170,21 +152,21 @@ func New(cfg Config) (*Service, error) {
 }
 
 // Register 注册服务到APISIX
-func (s *Service) Register(adminAPI, apiKey string) error {
+func (s *Service) Register() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if adminAPI == "" {
+	if s.adminApi == "" {
 		return ErrEmptyAdminAPI
 	}
 
-	if apiKey == "" {
+	if s.apiKey == "" {
 		s.logger.Warn("未提供API密钥，这可能会导致认证失败")
 	}
 
 	err := s.apiClient.createUpstream(
-		adminAPI,
-		apiKey,
+		s.adminApi,
+		s.apiKey,
 		s.upstreamID,
 		s.name,
 		s.host,
@@ -220,9 +202,9 @@ func (s *Service) StartHealthCheck() error {
 	return nil
 }
 
-// StartWithGracefulShutdown 启动服务并处理优雅关闭（异步）
-func (s *Service) StartWithGracefulShutdown(adminAPI, apiKey string) error {
-	if err := s.Register(adminAPI, apiKey); err != nil {
+// Start 启动服务
+func (s *Service) Start() error {
+	if err := s.Register(); err != nil {
 		return err
 	}
 
@@ -242,7 +224,7 @@ func (s *Service) StartWithGracefulShutdown(adminAPI, apiKey string) error {
 		s.cancel()
 
 		// 从APISIX注销
-		if err := s.Deregister(adminAPI, apiKey); err != nil {
+		if err := s.Deregister(); err != nil {
 			s.logger.Error("从APISIX注销失败", zap.Error(err))
 		}
 
@@ -262,17 +244,17 @@ func (s *Service) StartWithGracefulShutdown(adminAPI, apiKey string) error {
 }
 
 // Deregister 从APISIX注销服务
-func (s *Service) Deregister(adminAPI, apiKey string) error {
+func (s *Service) Deregister() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if adminAPI == "" {
+	if s.adminApi == "" {
 		return ErrEmptyAdminAPI
 	}
 
 	nodeKey := fmt.Sprintf("%s:%d", s.host, s.port)
 	if s.upstreamID != "" {
-		err := s.apiClient.deleteNode(adminAPI, apiKey, s.upstreamID, nodeKey)
+		err := s.apiClient.deleteNode(s.adminApi, s.apiKey, s.upstreamID, nodeKey)
 		if err != nil {
 			return fmt.Errorf("%w: %v", ErrDeleteNode, err)
 		}

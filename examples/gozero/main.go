@@ -54,27 +54,24 @@ func main() {
 		Name: "gozero-service",
 		Host: "192.168.3.71",
 		Port: 8886,
-		Path: "/api",
 		Upstream: apisix.Upstream{
 			Id: "gozero-upstream",
 		},
-		AdminAPI: "http://192.168.3.71:9180/apisix/admin",
-		APIKey:   "edd1c9f034335f136f87ad84b625c8f1",
+		AdminApi: "http://192.168.3.71:9180/apisix/admin",
+		ApiKey:   "edd1c9f034335f136f87ad84b625c8f1",
 		HealthCfg: apisix.HealthCheckConfig{
 			Enabled: true,
 			Path:    "/api/health",
 		},
-		// 使用go-zero的健康检查处理器
-		HealthHandler: goZeroHandler,
 	}
 
 	// 4. 创建APISIX服务实例
-	service, err := apisix.New(cfg)
+	service, err := apisix.New(cfg, apisix.OptionsWithHealthHandler(goZeroHandler))
 	if err != nil {
 		log.Fatalf("创建APISIX服务实例失败: %v", err)
 	}
 
-	if err := service.StartWithGracefulShutdown(cfg.AdminAPI, cfg.APIKey); err != nil {
+	if err := service.Start(); err != nil {
 		log.Fatalf("注册到APISIX失败: %v", err)
 	}
 

@@ -54,7 +54,7 @@ func main() {
 			Timeout:       5,             // 自定义超时时间
 			MaxFails:      2,             // 自定义最大失败次数
 			Method:        "GET",         // HTTP方法
-			Route:         "/api/health", // 自定义健康检查路由
+			Path:          "/api/health", // 自定义健康检查路由
 			HealthyCode:   200,           // 健康状态码
 			UnhealthyCode: 503,           // 自定义不健康状态码
 		},

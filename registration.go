@@ -52,7 +52,7 @@ type HealthCheckConfig struct {
 	Timeout       int    // 超时时间（秒）
 	MaxFails      int    // 最大失败次数
 	Method        string // HTTP 方法
-	Route         string // 健康检查路由
+	Path          string // 健康检查路由
 	HealthyCode   int    // 健康状态码
 	UnhealthyCode int    // 不健康状态码
 }
@@ -124,8 +124,8 @@ func New(cfg Config) (*Service, error) {
 			cfg.HealthCfg.Method = DefaultHealthCheckMethod
 		}
 
-		if cfg.HealthCfg.Route == "" {
-			cfg.HealthCfg.Route = DefaultHealthCheckRoute
+		if cfg.HealthCfg.Path == "" {
+			cfg.HealthCfg.Path = DefaultHealthCheckRoute
 		}
 
 		if cfg.HealthCfg.HealthyCode <= 0 {
@@ -146,10 +146,10 @@ func New(cfg Config) (*Service, error) {
 	// 设置健康检查服务
 	if cfg.HealthHandler != nil {
 		// 优先使用HealthHandler接口
-		healthSvc.setCustomHandler(cfg.HealthHandler, cfg.HealthCfg.Route)
+		healthSvc.setCustomHandler(cfg.HealthHandler, cfg.HealthCfg.Path)
 	} else if cfg.HTTPServer != nil {
 		// 兼容旧版本的HTTPServer方式
-		healthSvc.setCustomServer(cfg.HTTPServer, cfg.HealthCfg.Route)
+		healthSvc.setCustomServer(cfg.HTTPServer, cfg.HealthCfg.Path)
 	}
 
 	return &Service{

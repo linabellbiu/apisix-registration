@@ -24,7 +24,7 @@ func main() {
 			Timeout:       3,         // 健康检查超时时间(秒)
 			MaxFails:      3,         // 最大失败次数
 			Method:        "GET",     // HTTP方法
-			Route:         "/health", // 健康检查路由
+			Path:          "/health", // 健康检查路由
 			HealthyCode:   200,       // 健康状态码
 			UnhealthyCode: 500,       // 不健康状态码
 		},

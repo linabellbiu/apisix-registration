@@ -62,7 +62,7 @@ func main() {
 		APIKey:   "edd1c9f034335f136f87ad84b625c8f1",
 		HealthCfg: apisix.HealthCheckConfig{
 			Enabled: true,
-			Route:   "/api/health",
+			Path:    "/api/health",
 		},
 		// 使用go-zero的健康检查处理器
 		HealthHandler: goZeroHandler,

@@ -28,20 +28,14 @@ func main() {
 		Name:     "your-service",
 		Host:     "localhost",           // 服务主机名
 		Port:     8080,                  // 服务端口
-		Path:     "/api",                // 服务路径（用于日志）
 		Upstream: apisix.Upstream{
 			Id: "custom-upstream-id",    // 自定义上游ID（可选）
 		},
-		AdminAPI: "http://apisix-admin:9180/apisix/admin",  // APISIX Admin API 地址
-		APIKey:   os.Getenv("APISIX_API_KEY"),              // APISIX Admin API 密钥
+		AdminApi: "http://apisix-admin:9180/apisix/admin",  // APISIX Admin API 地址
+		ApiKey:   os.Getenv("APISIX_API_KEY"),              // APISIX Admin API 密钥
 		HealthCfg: apisix.HealthCheckConfig{
 			Enabled:       true,         // 启用健康检查
-			Timeout:       3,            // 健康检查超时时间(秒)
-			MaxFails:      3,            // 最大失败次数
-			Method:        "GET",        // HTTP方法
-			Route:         "/health",    // 健康检查路由
-			HealthyCode:   200,          // 健康状态码
-			UnhealthyCode: 500,          // 不健康状态码
+            Path:         "/health",    // 健康检查路由
 		},
 	}
 
@@ -52,31 +46,11 @@ func main() {
 	}
 
 	// 启动服务并处理优雅关闭
-	if err := service.StartWithGracefulShutdown(cfg.AdminAPI, cfg.APIKey); err != nil {
+	if err := service.Start(); err != nil {
 		log.Fatalf("服务启动失败: %v", err)
 	}
 }
 ```
-
-## 配置选项
-
-| 配置项 | 类型 | 必填 | 说明 | 默认值 |
-|-------|------|------|------|--------|
-| Name | string | 是 | 服务名称，用于标识服务 | - |
-| Host | string | 是 | 服务主机名或IP | - |
-| Port | int | 是 | 服务端口 | - |
-| Path | string | 否 | 服务路径前缀 | / |
-| Upstream.Id | string | 否 | 自定义上游ID | {Name}_{Host}_{Port} |
-| AdminAPI | string | 是 | APISIX Admin API地址 | - |
-| APIKey | string | 否 | APISIX Admin API密钥 | - |
-| HealthCfg.Enabled | bool | 否 | 是否启用健康检查 | false |
-| HealthCfg.Timeout | int | 否 | 健康检查超时时间(秒) | 3 |
-| HealthCfg.MaxFails | int | 否 | 健康检查最大失败次数 | 3 |
-| HealthCfg.Method | string | 否 | 健康检查HTTP方法 | GET |
-| HealthCfg.Route | string | 否 | 健康检查路由 | /health |
-| HealthCfg.HealthyCode | int | 否 | 健康状态码 | 200 |
-| HealthCfg.UnhealthyCode | int | 否 | 不健康状态码 | 500 |
-| HTTPServer | *http.Server | 否 | 自定义HTTP服务器，用于集成健康检查 | nil |
 
 ## 上游管理
 
@@ -97,7 +71,6 @@ func main() {
 
 1. 在服务的端口上提供一个健康检查路由（默认为 `/health`）
 2. 返回包含服务状态的JSON响应
-3. 自动为未设置的健康检查参数设置合理的默认值
 
 ### 使用自定义HTTP服务器
 
@@ -119,8 +92,9 @@ cfg := apisix.Config{
         Enabled: true,
         Route:   "/api/health",  // 自定义健康检查路径
     },
-    HTTPServer: myServer,  // 传入自定义服务器
 }
+
+service, err := apisix.New(cfg,apisix.OptionsWithHttpServer(myServer))
 ```
 
 ### 2. 使用自定义健康检查处理器（任意HTTP框架）
@@ -160,8 +134,10 @@ ginHandler := &apisix.GinHealthHandler{
 // 在配置中传入
 cfg := apisix.Config{
     // ...其他配置...
-    HealthHandler: ginHandler,
 }
+
+service, err := apisix.New(cfg,apisix.OptionsWithHealthHandler(engine))
+
 ```
 
 ### 4. 集成go-zero框架
@@ -190,8 +166,10 @@ goZeroHandler := &apisix.GoZeroHealthHandler{
 // 在配置中传入
 cfg := apisix.Config{
     // ...其他配置...
-    HealthHandler: goZeroHandler,
 }
+
+service, err := apisix.New(cfg,apisix.OptionsWithHealthHandler(goZeroHandler))
+
 ```
 
 ### 5. 通过方法设置（在创建服务实例后）
@@ -217,14 +195,15 @@ service.StartHealthCheck()
 如果您希望手动控制注册和注销过程：
 
 ```go
+service, err := apisix.New(cfg)
 // 注册服务（包含检查上游是否存在的逻辑）
-err := service.Register(adminAPI, apiKey)
+err := service.Register()
 
 // 启动健康检查
 err := service.StartHealthCheck()
 
 // 注销服务（只删除特定节点，不删除整个上游）
-err := service.Deregister(adminAPI, apiKey)
+err := service.Deregister()
 ```
 
 ## 优雅关闭

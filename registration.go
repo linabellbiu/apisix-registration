@@ -70,16 +70,16 @@ type Config struct {
 	healthHandler HealthHandler
 }
 
-type Option func(Config)
+type Option func(*Config)
 
 func OptionsWithHttpServer(server *http.Server) Option {
-	return func(config Config) {
+	return func(config *Config) {
 		config.httpServer = server
 	}
 }
 
 func OptionsWithHealthHandler(health HealthHandler) Option {
-	return func(config Config) {
+	return func(config *Config) {
 		config.healthHandler = health
 	}
 }
@@ -88,7 +88,7 @@ func OptionsWithHealthHandler(health HealthHandler) Option {
 func New(cfg Config, o ...Option) (*Service, error) {
 	if !cfg.Enabled {
 		log.Println("注册服务未开启")
-		return &Service{}, nil
+		return nil, nil
 	}
 	logger, _ := zap.NewProduction()
 
@@ -129,7 +129,7 @@ func New(cfg Config, o ...Option) (*Service, error) {
 	healthSvc := newHealthService(cfg.Name, cfg.Port, logger)
 
 	for _, f := range o {
-		f(cfg)
+		f(&cfg)
 	}
 
 	// 设置健康检查服务

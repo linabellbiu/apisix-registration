@@ -88,7 +88,7 @@ func OptionsWithHealthHandler(health HealthHandler) Option {
 func New(cfg Config, o ...Option) (*Service, error) {
 	if !cfg.Enabled {
 		log.Println("注册服务未开启")
-		return &Service{}, nil
+		return nil, nil
 	}
 	logger, _ := zap.NewProduction()
 

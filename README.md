@@ -1,6 +1,6 @@
-# APISIX 服务注册包
+# APISIX 服务注册
 
-这个Go语言包提供了一个简洁优雅的方式来将服务注册到Apache APISIX中，同时包含健康检查路由和优雅退出功能。
+这个Go语言包提供了一个简洁优雅的方式来将服务注册到Apache APISIX中，不需要额外的注册发现服务,同时包含健康检查。
 
 ## 安装
 
@@ -213,3 +213,6 @@ err := service.Deregister()
 1. 从APISIX中注销服务（只删除特定节点）
 2. 关闭健康检查服务
 3. 完成所有清理工作
+
+## 注意:
+开启`apisix.HealthCheckConfig.Enabled=true`代码健康检查路由后,还要在apisix开启`主动检查`功能然后重启apisix服务,才能生效

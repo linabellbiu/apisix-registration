@@ -25,6 +25,7 @@ import (
 func main() {
 	// 创建服务配置
 	cfg := apisix.Config{
+        Enabled: true,
 		Name:     "your-service",
 		Host:     "localhost",           // 服务主机名
 		Port:     8080,                  // 服务端口
@@ -87,6 +88,7 @@ myServer := &http.Server{
 
 // 在配置中传入
 cfg := apisix.Config{
+    Enabled: true,
     // ...其他配置...
     HealthCfg: apisix.HealthCheckConfig{
         Enabled: true,

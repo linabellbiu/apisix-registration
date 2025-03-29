@@ -53,6 +53,7 @@ type HealthCheckConfig struct {
 
 // Config 是服务配置
 type Config struct {
+	Enabled   bool              `json:",optional"`
 	Name      string            // 服务名称
 	Port      int               // 服务端口
 	Host      string            `json:",optional"` // 服务主机名

@@ -3,6 +3,7 @@ package apisix_registration
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -85,6 +86,10 @@ func OptionsWithHealthHandler(health HealthHandler) Option {
 
 // New 创建一个新的服务实例
 func New(cfg Config, o ...Option) (*Service, error) {
+	if !cfg.Enabled {
+		log.Println("注册服务未开启")
+		return &Service{}, nil
+	}
 	logger, _ := zap.NewProduction()
 
 	if cfg.AdminApi == "" {
